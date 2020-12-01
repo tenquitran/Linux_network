@@ -1,0 +1,7 @@
+# Common
+*.o
+*.a
+*.exe
+
+# Project-specific
+log.txt
