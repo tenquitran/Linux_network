@@ -14,12 +14,11 @@ using namespace LibNet;
 
 //////////////////////////////////////////////////////////////////////
 
-
 int g_socket;
-
 
 void sigHandler(int signal);
 
+//////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[])
 {
@@ -41,7 +40,12 @@ int main(int argc, char *argv[])
     unsigned short srvPort = 7;
 
     if (3 == argc)
-        {srvPort = atoi(argv[2]);}
+    {
+        srvPort = atoi(argv[2]);
+        
+        if (0 == srvPort)
+            {Utils::err_exit("Failed to convert port number");}
+    }
     
     sockaddr_in srvAddr = {};
     srvAddr.sin_family = AF_INET;
