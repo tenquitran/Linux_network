@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
         cbReceivedTotal += cbReceived;
     }
     
-    std::cout << "Finished. Stopping the client..." << std::endl;
+    std::cout << "\nFinished. Stopping the client..." << std::endl;
 
     shutdown(s, SHUT_RDWR);
     close(s);

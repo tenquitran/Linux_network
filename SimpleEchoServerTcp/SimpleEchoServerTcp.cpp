@@ -16,6 +16,8 @@ int g_srvSocket;
 
 const int BackLog = 5;
 
+const size_t CbBuffer = 256;    // receive buffer size
+
 void sigHandler(int signal);
 
 //////////////////////////////////////////////////////////////////////
@@ -56,16 +58,48 @@ int main(int argc, char *argv[])
         sockaddr_in clientAddress = {};
         
         socklen_t addrLen = sizeof(clientAddress);
-        
+
         int clientSocket = accept(g_srvSocket, (sockaddr *)&clientAddress, &addrLen);
         
         if (-1 == clientSocket)
-            {Utils::err_exit("accept() failed");}
+        {
+            if (-1 == g_srvSocket)
+            {
+                // Our signal handler closed the server socket.
+                std::cout << "Server socket has been closed" << std::endl;
+                return 0;
+            }
+            else
+                {Utils::err_exit("accept() failed");}
+        }
         
         std::cout << "Client accepted: " << inet_ntoa(clientAddress.sin_addr) << std::endl;
         
-        // TODO: handle the client
-        ;
+        // Handle the client.
+        
+        char rcvBuffer[CbBuffer];
+        ssize_t cbReceived = {};
+        
+        cbReceived = recv(clientSocket, rcvBuffer, CbBuffer, 0);
+        
+        if (-1 == cbReceived)
+            {Utils::err_exit("recv() failed (1)");}
+        
+        while (cbReceived > 0)
+        {
+            if (cbReceived != send(clientSocket, rcvBuffer, cbReceived, 0))
+                {Utils::err_exit("send() failed");}
+            
+            cbReceived = recv(clientSocket, rcvBuffer, CbBuffer, 0);
+            
+            if (-1 == cbReceived)
+                {Utils::err_exit("recv() failed (2)");}
+            
+            std::cout << "Message received and sent successfully" << std::endl;
+        }
+        
+        shutdown(clientSocket, SHUT_RDWR);
+        close(clientSocket);
     }
     
     return 0;
@@ -75,10 +109,12 @@ void sigHandler(int signal)
 {
     if (SIGINT == signal)
     {
-        std::cout << "SIGINT arrived. Stopping the client..." << std::endl;
+        std::cout << "SIGINT arrived. Stopping the server..." << std::endl;
         
         shutdown(g_srvSocket, SHUT_RDWR);
         close(g_srvSocket);
+        
+        g_srvSocket = -1;
     }
     else
         {std::cout << "An unknown signal arrived: " << signal << std::endl;}
